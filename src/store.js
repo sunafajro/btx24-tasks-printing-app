@@ -1,40 +1,40 @@
 import Vue from "vue";
 import Vuex from "vuex";
-import moment from "moment";
 import Noty from "noty";
 import { init, listsFieldGet, listsElementGet } from "./methods";
-import { getNumbers, getDays, getMonths, getYears } from "./utils";
 
 Vue.use(Vuex);
 const el = document.getElementById("app");
 
 export default new Vuex.Store({
   state: {
-    hourEnd: moment()
-    .add(1, "hours")
-    .format("HH"),
-    hourStart: moment().format("HH"),
-    day: moment().format("DD"),
-    month: moment().format("MM"),
-    year: moment().format("YYYY"),
-    hours: getNumbers(0, 23),
-    days: getDays({
-      month: moment().format("MM"),
-      year: moment().format("YYYY")
-    }),
-    months: getMonths(),
-    years: getYears(),
+    // выбранный в форме исполнитель
     executor: null,
+    // список доступных элементов поля "Исполнитель"
     executors: [],
     fields: {
+      // идентификатор поля "Дата поступления заявки"
+      createdId: null,
+      // идентификатор поля "Исполнитель"
       executorId: null,
       taskObjectId: null,
-      taskStatusId: null
+      // идентификатор поля "Статус заявки"
+      taskStatusId: null,
+      // идентификатор поля "Подразделеие"
+      unitId: null
     },
-    finished: null,
+    statuses: null,
+    // идентификатор группы
+    groupId: el.dataset.groupid,
+    // идентификатор универсального списка
     listId: el.dataset.listid,
     loading: true,
-    tasks: []
+    // список заданий
+    tasks: [],
+    // выбранное подразделение
+    unit: null,
+    // список доступных элементов поля "Подразделение"
+    units: []
   },
   mutations: {
     updateExecutors(state, data) {
@@ -44,8 +44,8 @@ export default new Vuex.Store({
       state.fields = data;
       state.loading = false;
     },
-    updateFinished(state, data) {
-      state.finished = data;
+    updateStatuses(state, data) {
+      state.statuses = data;
     },
     updateTasks(state, data) {
       state.tasks = data;
@@ -54,28 +54,12 @@ export default new Vuex.Store({
       if (data.hasOwnProperty("executor")) {
         state.executor = data.executor;
       }
-      if (data.hasOwnProperty("hourEnd")) {
-        state.hourEnd = data.hourEnd;
+      if (data.hasOwnProperty("unit")) {
+        state.unit = data.unit;
       }
-      if (data.hasOwnProperty("hourStart")) {
-        state.hourStart = data.hourStart;
-      }
-      if (data.hasOwnProperty("day")) {
-        state.day = data.day;
-      }
-      if (data.hasOwnProperty("month")) {
-        state.month = data.month;
-      }
-      if (data.hasOwnProperty("year")) {
-        state.year = data.year;
-      }
-      if (data.hasOwnProperty("month") || data.hasOwnProperty("year")) {
-        state.day = "01";
-        state.days = getDays({
-          month: data.hasOwnProperty("month") ? data.month : state.month,
-          year: data.hasOwnProperty("year") ? data.year : state.year
-        });
-      }
+    },
+    updateUnits(state, data) {
+      state.units = data;
     }
   },
   actions: {
@@ -91,9 +75,15 @@ export default new Vuex.Store({
     },
     async getElementFields({ commit, dispatch, state }) {
       try {
-        const rawFields = await listsFieldGet({ listId: state.listId });
+        const rawFields = await listsFieldGet({
+          groupId: state.groupId,
+          listId: state.listId
+        });
         const filteredFields = Object.keys(rawFields).reduce((a, v) => {
           switch (rawFields[v].NAME) {
+            case "Дата поступления задания":
+              a.createdId = rawFields[v].FIELD_ID;
+              break;
             case "Объект":
               a.taskObjectId = rawFields[v].FIELD_ID;
               break;
@@ -112,12 +102,24 @@ export default new Vuex.Store({
             }
             case "Статус заявки": {
               a.taskStatusId = rawFields[v].FIELD_ID;
-              const finished = Object.keys(
-                rawFields[v].DISPLAY_VALUES_FORM
-              ).filter(
-                item => rawFields[v].DISPLAY_VALUES_FORM[item] === "Завершена"
-              )[0];
-              commit("updateFinished", finished);
+              // сохраняем список состояний, за исключением "Завершена"
+              const data = Object.keys(rawFields[v].DISPLAY_VALUES_FORM).filter(
+                item => rawFields[v].DISPLAY_VALUES_FORM[item] !== "Завершена"
+              );
+              commit("updateStatuses", data);
+              break;
+            }
+            case "Подразделение": {
+              a.unitId = rawFields[v].FIELD_ID;
+              const data = Object.keys(rawFields[v].DISPLAY_VALUES_FORM).map(
+                item => {
+                  return {
+                    text: rawFields[v].DISPLAY_VALUES_FORM[item],
+                    value: String(item)
+                  };
+                }
+              );
+              commit("updateUnits", data);
               break;
             }
             default:
@@ -134,28 +136,34 @@ export default new Vuex.Store({
     },
     async getElements({ commit, dispatch, state }) {
       try {
-        const start = state.day + "." + state.month + "." + state.year + " " + state.hourStart + ":" + "00:" + "00";
-        const end = state.day + "." + state.month + "." + state.year + " " + state.hourEnd + ":" + "59:" + "59";
         const elements = await listsElementGet({
-          start,
-          end,
+          groupId: state.groupId,
           listId: state.listId,
-          executorProp: { name: state.fields.executorId, value: state.executor },
-          statusProp: { name: state.fields.taskStatusId, value: state.finished }
+          executorProp: {
+            name: state.fields.executorId,
+            value: state.executor
+          },
+          statusProp: {
+            name: state.fields.taskStatusId,
+            value: state.statuses
+          },
+          unitProp: { name: state.fields.unitId, value: state.unit }
         });
         const data = elements.map(e => {
+          const d = e[state.fields.createdId];
           const to = e[state.fields.taskObjectId];
           return {
             id: e.ID,
-            creationDate: e.DATE_CREATE,
+            creationDate: d[Object.keys(d)[0]],
             taskObject: to[Object.keys(to)[0]],
             taskDescription: e.PREVIEW_TEXT,
-            executorId: e[state.fields.executorId]
+            executorId: e[state.fields.executorId],
+            taskComment: e.DETAIL_TEXT
           };
         });
         if (Array.isArray(data) && !data.length) {
           dispatch("showNotification", {
-            text: "Для исполнителя отсутствуют заявки в указанном интервале времени!",
+            text: "Для исполнителя отсутствуют незавершенные заявки!",
             type: "info"
           });
         }

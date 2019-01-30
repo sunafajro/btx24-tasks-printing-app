@@ -6,13 +6,21 @@ export const init = () => {
   });
 };
 
-export const listsFieldGet = ({ listId }) => {
+/**
+ * @param { string } groupId
+ * @param { string } listId
+ * @returns { Array }
+ * Метод возвращает данные поля. В случае успеха будет возвращен список полей с данными, иначе пустой массив.
+ * https://dev.1c-bitrix.ru/rest_help/lists/fields/lists_field_get.php
+ */
+export const listsFieldGet = ({ groupId, listId }) => {
   return new Promise((resolve, reject) => {
     BX24.callMethod(
       "lists.field.get",
       {
-        IBLOCK_TYPE_ID: "bitrix_processes",
-        IBLOCK_ID: listId
+        IBLOCK_TYPE_ID: "lists_socnet",
+        IBLOCK_ID: listId,
+        SOCNET_GROUP_ID: groupId
       },
       result => {
         if (result.error()) reject(result.error());
@@ -22,18 +30,34 @@ export const listsFieldGet = ({ listId }) => {
   });
 };
 
-export const listsElementGet = ({ start, end, listId, executorProp, statusProp }) => {
+/**
+ * @param { string } groupId
+ * @param { string } listId
+ * @param { Object } executorProp
+ * @param { Object } statusProp
+ * @param { Object } unitProp
+ * @returns { Array }
+ * Метод возвращает список элементов или элемент. В случае успеха возвращает данные по элементу(там), иначе пустой массив.
+ * https://dev.1c-bitrix.ru/rest_help/lists/elements/lists_element_get.php
+ */
+export const listsElementGet = ({
+  groupId,
+  listId,
+  executorProp,
+  statusProp,
+  unitProp
+}) => {
   return new Promise((resolve, reject) => {
     BX24.callMethod(
       "lists.element.get",
       {
-        IBLOCK_TYPE_ID: "bitrix_processes",
+        IBLOCK_TYPE_ID: "lists_socnet",
         IBLOCK_ID: listId,
+        SOCNET_GROUP_ID: groupId,
         FILTER: {
-          ">=DATE_CREATE": start,
-          "<=DATE_CREATE": end,
-          [executorProp.name]: executorProp.value,
-          ["!" + statusProp.name]: statusProp.value
+          ['='+ unitProp.name]: unitProp.value,
+          ['='+ executorProp.name]: executorProp.value,
+          ['='+ statusProp.name]: statusProp.value
         }
       },
       result => {

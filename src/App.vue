@@ -2,15 +2,25 @@
   <div id="app" class="container-fluid">
     <form @submit.prevent="getElements">
       <div>
-        <b>Дата:</b>
+        <b>Подразделение:</b>
         <div class="form-group">
-          <date-picker/>
+          <select class="form-control form-control-sm" :disabled="!units.length" v-model="unit">
+            <option
+              :key="'opt-unit-' + index"
+              v-for="(ex, index) in units"
+              :value="ex.value"
+            >{{ ex.text }}</option>
+          </select>
         </div>
       </div>
-      <div v-if="executors.length">
+      <div>
         <b>Исполнитель:</b>
         <div class="form-group">
-          <select class="form-control form-control-sm" v-model="executor">
+          <select
+            class="form-control form-control-sm"
+            :disabled="!executors.length"
+            v-model="executor"
+          >
             <option
               :key="'opt-executor-' + index"
               v-for="(ex, index) in executors"
@@ -39,16 +49,6 @@
           должность, ФИО специалиста
           <i style="text-decoration: underline">{{ executorName }}</i>
         </p>
-        <p style="font-size: 14px; margin-bottom: 5px; margin-top: 5px">
-          За смену с
-          <u>{{ hourStart }}</u> до
-          <u>{{ hourEnd }}</u>
-          часов{{ ' ' }}
-          «<u>{{ day }}</u>»
-          <u>{{ monthName }}</u>
-          {{ ' ' }}
-          <u>{{ year }}</u> г.
-        </p>
       </div>
       <table class="table table-bordered small">
         <thead>
@@ -58,7 +58,8 @@
             <th>Объект</th>
             <th>Задание (подробное описание)</th>
             <th>Подпись и ФИО принявшего работу</th>
-            <th>Комментарий по выполнению заявки</th>
+            <th>Комментарий о НЕисполнении</th>
+            <th>ФИО обрабатывающего заказ-наряд</th>
           </tr>
         </thead>
         <tbody>
@@ -66,9 +67,28 @@
             <td style="width: 100px">{{ t.id}}</td>
             <td style="width: 200px">{{ t.creationDate}}</td>
             <td>{{ t.taskObject }}</td>
-            <td>{{ t.taskDescription }}</td>
+            <td v-html="t.taskDescription"></td>
             <td></td>
+            <td>{{ t.taskComment }}</td>
             <td></td>
+          </tr>
+        </tbody>
+      </table>
+      <table :style="customCss.tblMain">
+        <tbody>
+          <tr>
+            <td :style="customCss.tblTdBig">Подпись специалиста</td>
+            <td :style="customCss.tblTdBig">_________________/</td>
+            <td :style="customCss.tblTdBig">_________________/</td>
+          </tr>
+          <tr>
+            <td :style="customCss.tblTgSmall"></td>
+            <td :style="customCss.tblTgSmall">подпись</td>
+            <td :style="customCss.tblTgSmall">фио</td>
+          </tr>
+          <tr>
+            <td :style="customCss.tblTdBig">Время сдачи заказ-наряда</td>
+            <td colspan="2" :style="customCss.tblTdBig">___________________________________</td>
           </tr>
         </tbody>
       </table>
@@ -84,38 +104,42 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import { Printd } from "printd";
-import DatePicker from "./components/DatePicker.vue";
 
 const printD = new Printd();
 const cssText = `
   table {
 		border-collapse: collapse;
 		width: 100%;
-	}
+  }
 	td, th {
-		padding: 3px;
-		border: 1px solid black;
+    border: 1px solid black;
+    font-size: 14px;
+    height: 60px;
+    padding: 5px;
   }
 `;
 
 export default {
   name: "app",
-  components: {
-    "date-picker": DatePicker
+  data() {
+    return {
+      customCss: {
+        tblMain: "margin-top: 5px; margin-bottom: 5px; width: auto",
+        tblTdBig: "border: none; font-size: 14px; height: auto",
+        tblTgSmall: "border: none; font-size: 10px; text-align: center; height: auto"
+      }
+    };
   },
   computed: {
-    ...mapState([
-      "day",
-      "executor",
-      "executors",
-      "hourEnd",
-      "hourStart",
-      "loading",
-      "month",
-      "months",
-      "tasks",
-      "year"
-    ]),
+    ...mapState(["executor", "executors", "loading", "tasks", "unit", "units"]),
+    unit: {
+      get() {
+        return this.$store.state.unit;
+      },
+      set(value) {
+        this.$store.commit("updateTasksForm", { unit: value });
+      }
+    },
     executor: {
       get() {
         return this.$store.state.executor;
@@ -131,13 +155,6 @@ export default {
         this.executor
       ) {
         return this.executors.filter(ex => ex.value === this.executor)[0].text;
-      } else {
-        return null;
-      }
-    },
-    monthName() {
-      if (Array.isArray(this.months) && this.months.length && this.month) {
-        return this.months.filter(m => m.value === this.month)[0].text;
       } else {
         return null;
       }
