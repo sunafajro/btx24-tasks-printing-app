@@ -1,16 +1,27 @@
 <template>
   <div id="app" class="container-fluid">
     <form @submit.prevent="getElements">
-      <div>
-        <b>Подразделение:</b>
-        <div class="form-group">
-          <select class="form-control form-control-sm" :disabled="!units.length" v-model="unit">
-            <option
-              :key="'opt-unit-' + index"
-              v-for="(ex, index) in units"
-              :value="ex.value"
-            >{{ ex.text }}</option>
-          </select>
+      <div class="row">
+        <div class="col-4">
+          <b>Интервал:</b>
+          <div class="form-group">
+            <select class="form-control form-control-sm" v-model="mode">
+              <option value="today">Сегодня</option>
+              <option value="all">За все время</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-8">
+          <b>Подразделение:</b>
+          <div class="form-group">
+            <select class="form-control form-control-sm" :disabled="!units.length" v-model="unit">
+              <option
+                :key="'opt-unit-' + index"
+                v-for="(ex, index) in units"
+                :value="ex.value"
+              >{{ ex.text }}</option>
+            </select>
+          </div>
         </div>
       </div>
       <div>
@@ -126,12 +137,29 @@ export default {
       customCss: {
         tblMain: "margin-top: 5px; margin-bottom: 5px; width: auto",
         tblTdBig: "border: none; font-size: 14px; height: auto",
-        tblTgSmall: "border: none; font-size: 10px; text-align: center; height: auto"
+        tblTgSmall:
+          "border: none; font-size: 10px; text-align: center; height: auto"
       }
     };
   },
   computed: {
-    ...mapState(["executor", "executors", "loading", "tasks", "unit", "units"]),
+    ...mapState([
+      "executor",
+      "executors",
+      "loading",
+      "mode",
+      "tasks",
+      "unit",
+      "units"
+    ]),
+    mode: {
+      get() {
+        return this.$store.state.mode;
+      },
+      set(value) {
+        this.$store.commit("updateTasksForm", { mode: value });
+      }
+    },
     unit: {
       get() {
         return this.$store.state.unit;

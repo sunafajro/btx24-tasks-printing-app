@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import Noty from "noty";
+import moment from "moment";
 import { init, listsFieldGet, listsElementGet } from "./methods";
 
 Vue.use(Vuex);
@@ -23,6 +24,7 @@ export default new Vuex.Store({
       // идентификатор поля "Подразделеие"
       unitId: null
     },
+    mode: "today",
     statuses: null,
     // идентификатор группы
     groupId: el.dataset.groupid,
@@ -31,6 +33,15 @@ export default new Vuex.Store({
     loading: true,
     // список заданий
     tasks: [],
+    // за текущйй день
+    today: {
+      start: moment()
+        .startOf("day")
+        .format("YYYY-MM-DD HH:mm:ss"),
+      end: moment()
+        .endOf("day")
+        .format("YYYY-MM-DD HH:mm:ss")
+    },
     // выбранное подразделение
     unit: null,
     // список доступных элементов поля "Подразделение"
@@ -56,6 +67,9 @@ export default new Vuex.Store({
       }
       if (data.hasOwnProperty("unit")) {
         state.unit = data.unit;
+      }
+      if (data.hasOwnProperty("mode")) {
+        state.mode = data.mode;
       }
     },
     updateUnits(state, data) {
@@ -137,6 +151,10 @@ export default new Vuex.Store({
     async getElements({ commit, dispatch, state }) {
       try {
         const elements = await listsElementGet({
+          dateProp:
+            state.mode === "today"
+              ? { name: state.fields.createdId, value: state.today }
+              : null,
           groupId: state.groupId,
           listId: state.listId,
           executorProp: {

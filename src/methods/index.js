@@ -41,12 +41,22 @@ export const listsFieldGet = ({ groupId, listId }) => {
  * https://dev.1c-bitrix.ru/rest_help/lists/elements/lists_element_get.php
  */
 export const listsElementGet = ({
+  dateProp,
   groupId,
   listId,
   executorProp,
   statusProp,
   unitProp
 }) => {
+  const filter = {
+    ["=" + unitProp.name]: unitProp.value,
+    ["=" + executorProp.name]: executorProp.value,
+    ["=" + statusProp.name]: statusProp.value
+  };
+  if (dateProp !== null) {
+    filter[">=" + dateProp.name] = dateProp.value.start;
+    filter["<=" + dateProp.name] = dateProp.value.end;
+  }
   return new Promise((resolve, reject) => {
     BX24.callMethod(
       "lists.element.get",
@@ -54,11 +64,7 @@ export const listsElementGet = ({
         IBLOCK_TYPE_ID: "lists_socnet",
         IBLOCK_ID: listId,
         SOCNET_GROUP_ID: groupId,
-        FILTER: {
-          ['='+ unitProp.name]: unitProp.value,
-          ['='+ executorProp.name]: executorProp.value,
-          ['='+ statusProp.name]: statusProp.value
-        }
+        FILTER: filter
       },
       result => {
         if (result.error()) reject(result.error());
