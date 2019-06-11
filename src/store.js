@@ -37,10 +37,10 @@ export default new Vuex.Store({
     today: {
       start: moment()
         .startOf("day")
-        .format("YYYY-MM-DD HH:mm:ss"),
+        .format("DD.MM.YYYY HH:mm:ss"),
       end: moment()
         .endOf("day")
-        .format("YYYY-MM-DD HH:mm:ss")
+        .format("DD.MM.YYYY HH:mm:ss")
     },
     // выбранное подразделение
     unit: null,
