@@ -71,6 +71,7 @@
             <th>Подпись и ФИО принявшего работу</th>
             <th>Комментарий о НЕисполнении</th>
             <th>ФИО обрабатывающего заказ-наряд</th>
+            <th>Израсходовано</th>
           </tr>
         </thead>
         <tbody>
@@ -81,6 +82,7 @@
             <td v-html="t.taskDescription"></td>
             <td></td>
             <td>{{ t.taskComment }}</td>
+            <td></td>
             <td></td>
           </tr>
         </tbody>
