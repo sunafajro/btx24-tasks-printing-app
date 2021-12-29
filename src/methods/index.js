@@ -18,7 +18,8 @@ export const listsFieldGet = ({ groupId, listId }) => {
     BX24.callMethod(
       "lists.field.get",
       {
-        IBLOCK_TYPE_ID: "lists_socnet",
+        // старое значение lists_socnet
+        IBLOCK_TYPE_ID: "bitrix_processes",
         IBLOCK_ID: listId,
         SOCNET_GROUP_ID: groupId
       },
@@ -61,7 +62,8 @@ export const listsElementGet = ({
     BX24.callMethod(
       "lists.element.get",
       {
-        IBLOCK_TYPE_ID: "lists_socnet",
+        // старое значение lists_socnet
+        IBLOCK_TYPE_ID: "bitrix_processes",
         IBLOCK_ID: listId,
         SOCNET_GROUP_ID: groupId,
         FILTER: filter

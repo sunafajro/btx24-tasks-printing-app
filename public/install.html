@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="//api.bitrix24.com/api/v1/"></script>
+  </head>
+<body>
+  <h3>Начинаем установку приложения...</h3>
+  <script type="text/javascript">
+    BX24.init(() => {
+      var params = {
+	    'CODE': 'DealProductPrepare',
+	    // this url actually not used, but needed for installation
+	    'HANDLER': '<url to your site>/prepare.php',
+	    'AUTH_USER_ID': 1,
+	    'NAME': {
+		  'ru': 'Подготовка бланк-наряда по заявкам'
+	    },
+	    'DESCRIPTION': {
+		  'ru': 'Действие получает список заявок на выполнение и формирует из них файл бланк-наряда'
+	    },
+	    'PROPERTIES': {
+		  'ID': {
+		    'Name': {
+			  'ru': 'ID элемента'
+			},
+			'Description': {
+			  'ru': 'ID элемента'
+			},
+			'Type': 'string',
+			'Required': 'Y',
+			'Multiple': 'N',
+			'Default': '',
+		  },
+		  'DATE_CREATE': {
+		    'Name': {
+			  'ru': 'Дата поступления задания'
+			},
+			'Description': {
+			  'ru': 'Дата поступления задания'
+			},
+			'Type': 'string',
+			'Required': 'Y',
+			'Multiple': 'N',
+			'Default': '',
+		  },
+		  'ispolnitel': {
+		    'Name': {
+			  'ru': 'Исполнитель'
+			},
+			'Description': {
+			  'ru': 'Исполнитель'
+			},
+			'Type': 'string',
+			'Required': 'Y',
+			'Multiple': 'N',
+			'Default': '',
+		  },
+		  'ISTOCHNIK': {
+		    'Name': {
+			  'ru': 'Объект'
+			},
+			'Description': {
+			  'ru': 'Объект'
+			},
+			'Type': 'string',
+			'Required': 'Y',
+			'Multiple': 'N',
+			'Default': '',
+		  },
+		  'PREVIEW_TEXT': {
+		    'Name': {
+			  'ru': 'Задание (Подробное описание)'
+			},
+			'Description': {
+			  'ru': 'Задание (Подробное описание)'
+			},
+			'Type': 'string',
+			'Required': 'Y',
+			'Multiple': 'Y',
+			'Default': '',
+		  }
+	    },
+	    'RETURN_PROPERTIES': {
+		  'file_url': {
+			 'Name': {
+				'ru': 'Ссылка на файл'
+			 },
+			 'Type': 'string',
+			 'Multiple': 'N',
+			 'Default': null
+		  },
+	    }
+	};
+	BX24.callMethod('bizproc.activity.add',params,result => {
+	  if (result.error()) {
+	    alert("Error: " + result.error());
+	  } else {
+	    alert("Действие успешно установлено");
+	    BX24.installFinish();
+	  }
+	});
+  });
+</script>
+
+</body>
+</html>
