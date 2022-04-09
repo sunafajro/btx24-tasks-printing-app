@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "bootstrap": "^4.3.1",
-    "moment": "^2.23.0",
+    "moment": "^2.29.2",
     "noty": "^3.2.0-beta",
     "printd": "^1.1.0",
     "vue": "^2.5.21",
